@@ -92,3 +92,58 @@ st.plotly_chart(pie1)
 
 # button to create a dataframe with rank!
 
+import json
+import pandas as pd
+import plotly.express as px
+import numpy as np
+
+# ===============================
+# 1. Cargar GeoJSON
+# ===============================
+with open("colombia.geojson", "r", encoding="utf-8") as f:
+    geojson = json.load(f)
+
+# ===============================
+# 2. Extraer nombres oficiales
+# ===============================
+departamentos_gadm = sorted(
+    set(feature["properties"]["NAME_1"] for feature in geojson["features"])
+)
+
+# ===============================
+# 3. Crear DataFrame usando esos nombres
+# ===============================
+np.random.seed(42)
+
+df = pd.DataFrame({
+    "departamento": departamentos_gadm,
+    "mora": np.round(np.random.uniform(1.0, 6.0, size=len(departamentos_gadm)), 2)
+})
+
+print("Departamentos incluidos:", len(df))
+print(df["departamento"].tolist())
+
+# ===============================
+# 4. Mapa coroplético
+# ===============================
+fig = px.choropleth(
+    df,
+    geojson=geojson,
+    locations="departamento",
+    featureidkey="properties.NAME_1",
+    color="mora",
+    color_continuous_scale="Reds",
+    title="Mapa de Mora por Departamento - Colombia",
+    labels={"mora": "Tasa de mora (%)"}
+)
+
+fig.update_geos(
+    fitbounds="locations",
+    visible=False
+)
+
+fig.update_layout(
+    margin=dict(l=0, r=0, t=50, b=0)
+)
+
+fig.show()
