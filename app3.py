@@ -24,6 +24,7 @@ url = 'https://raw.githubusercontent.com/it-ces/Datasets/refs/heads/main/Dpto-gd
 
 df  =  pd.read_csv(url)
 st.header('Inequality income')
+st.subheader('Iván Andrés Trujillo Abella')
 st.dataframe(df.head())
 
 G_min_value = 2005
@@ -100,8 +101,19 @@ import numpy as np
 # ===============================
 # 1. Cargar GeoJSON
 # ===============================
-with open("colombia.geojson", "r", encoding="utf-8") as f:
-    geojson = json.load(f)
+import json
+import pandas as pd
+import plotly.express as px
+import numpy as np
+import requests
+
+# ===============================
+# 1. Cargar GeoJSON desde GitHub
+# ===============================
+url_geojson = "https://raw.githubusercontent.com/it-ces/Datasets/main/colombia.geojson"
+
+response = requests.get(url_geojson)
+geojson = response.json()
 
 # ===============================
 # 2. Extraer nombres oficiales
@@ -110,18 +122,6 @@ departamentos_gadm = sorted(
     set(feature["properties"]["NAME_1"] for feature in geojson["features"])
 )
 
-# ===============================
-# 3. Crear DataFrame usando esos nombres
-# ===============================
-np.random.seed(42)
-
-df = pd.DataFrame({
-    "departamento": departamentos_gadm,
-    "mora": np.round(np.random.uniform(1.0, 6.0, size=len(departamentos_gadm)), 2)
-})
-
-print("Departamentos incluidos:", len(df))
-print(df["departamento"].tolist())
 
 # ===============================
 # 4. Mapa coroplético
@@ -129,9 +129,9 @@ print(df["departamento"].tolist())
 fig = px.choropleth(
     df,
     geojson=geojson,
-    locations="departamento",
+    locations="DEPARTAMENTOS",
     featureidkey="properties.NAME_1",
-    color="mora",
+    color="2005",
     color_continuous_scale="Reds",
     title="Mapa de Mora por Departamento - Colombia",
     labels={"mora": "Tasa de mora (%)"}
@@ -146,4 +146,31 @@ fig.update_layout(
     margin=dict(l=0, r=0, t=50, b=0)
 )
 
-fig.show()
+st.plotly_chart(fig, use_container_width=True)
+
+import plotly.express as px
+import pandas as pd
+
+barfig = px.bar(
+    df,
+    x="DEPARTAMENTOS",
+    y="2005",
+    title="Gráfico de barras básico"
+)
+
+
+
+
+st.plotly_chart(barfig)
+
+
+
+hist  = px.histogram(df, x="2005", nbins=30)
+st.plotly_chart(hist)
+
+
+
+df['meanRate2005'] = mean_growth_rate(2005, 2006, df)
+df['up_mean'] = (df['2005'] > df['2005'].mean()).astype('int64')
+box =  px.box(df, x="up_mean", y="meanRate2005")
+st.plotly_chart(box)
